@@ -15,8 +15,8 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Multithread_Server_Class.cpp">
-      <Filter>來源檔案</Filter>
+    <ClCompile Include="client.cpp">
+      <Filter>資源檔</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

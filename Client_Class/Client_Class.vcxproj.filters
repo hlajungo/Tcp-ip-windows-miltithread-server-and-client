@@ -15,7 +15,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Multithread_Server_Class.cpp">
+    <ClCompile Include="Client_Class.cpp">
       <Filter>來源檔案</Filter>
     </ClCompile>
   </ItemGroup>
