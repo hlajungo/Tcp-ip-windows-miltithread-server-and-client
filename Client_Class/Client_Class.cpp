@@ -1,4 +1,3 @@
-1. 當有客戶端連接時 要關閉伺服器 需要先關掉所有socket才能關閉
 #define _CRT_SECURE_NO_WARNINGS
 #define WIN32_LEAN_AND_MEAN
 

@@ -1,8 +1,3 @@
-
-
-
-
-
 #define _CRT_SECURE_NO_WARNINGS
 #undef UNICODE
 
@@ -239,8 +234,6 @@ int acceptClient(Server s)
 		std::thread clientIOa(clientIO, s);
 		clientIOa.detach();
 		s.CurrentClientNumber += 1;
-
-
 	}
 }
 
