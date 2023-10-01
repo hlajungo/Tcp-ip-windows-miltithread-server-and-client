@@ -20,7 +20,6 @@ constexpr hash_t basis = 0xCBF29CE484222325ull;
 hash_t hash_(char const* str)
 {
 	hash_t ret{ basis };
-
 	while (*str) {
 		ret ^= *str;
 		ret *= prime;
@@ -38,18 +37,18 @@ constexpr unsigned long long operator "" _hash(char const* p, size_t)
 	return hash_compile_time(p);
 }
 
-
-
-
 class Client
 {
 public:
+
+	//Client::Client()
 	Client(const char* ip, const char* port)
 	{
 		this->Server_IP = ip;
 		this->Server_Port = port;
 	}
 
+	//Client::ClientInit()
 	int ClientInit()
 	{
 		iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
@@ -91,17 +90,21 @@ public:
 		}
 	}
 
+	//Client::clientControlPanel()
 	int clientControlPanel()
 	{
 		// 開始傳輸
 		std::cout << "[客戶端]\n";
 		std::cout << "------功能介紹------\n";
+		std::cout << "顯示個人資訊 輸入 : personal_information \n";
+		std::cout << " \n";
 		std::cout << "關掉客戶端 輸入: client_close \n";
 		std::cout << "--------------------\n";
 		std::cout << "請輸入 : ";
 		//data會傳送後由server處理, 並且client也會有一套處理系統
 		while (std::cin >> sendbuf)
 		{
+			memset(recvbuf, 0, sizeof(recvbuf));
 			iResult = send(ConnectSocket, sendbuf, (int)strlen(sendbuf), 0);
 			if (iResult == SOCKET_ERROR)
 			{
@@ -113,6 +116,21 @@ public:
 
 			switch (hash_(sendbuf))
 			{
+			case"personal_information"_hash:
+				iResult = recv(ConnectSocket, recvbuf, sizeof(recvbuf), 0);
+				if (iResult == -1)
+				{
+					std::cout << "recv failed with error: " << WSAGetLastError() << "\n";
+					closesocket(ConnectSocket);
+					WSACleanup();
+					return 1;
+				}
+			
+				std::cout << "[系統]你的IP : " << recvbuf << "\n";
+				std::cout << "請輸入:";
+					 
+
+				break;
 			case "client_close"_hash:
 				iResult = shutdown(ConnectSocket, SD_BOTH);
 				if (iResult == SOCKET_ERROR) {
@@ -123,7 +141,7 @@ public:
 				}
 				closesocket(ConnectSocket);
 				WSACleanup();
-				std::cout << "\n[控制面板] : 結束通訊...\n";
+				std::cout << "\n[系統] : 結束通訊...\n";
 
 				return 0;
 				break;
@@ -139,10 +157,8 @@ public:
 					return 1;
 				}
 				break;
-			case "third"_hash:
-				std::cout << "3rd one\n";
-				break;
 			default:
+				std::cout << " 輸入錯誤或無此指令\n";
 				std::cout << "\n請輸入 : ";
 				break;
 			}
@@ -159,6 +175,7 @@ private:
 	struct addrinfo* result = NULL, * ptr = NULL, hints;
 	int iResult;
 	char sendbuf[1024];
+	char recvbuf[1024];
 	const char* Server_IP;
 	const char* Server_Port;
 

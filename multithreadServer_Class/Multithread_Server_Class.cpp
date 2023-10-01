@@ -1,4 +1,5 @@
 #define _CRT_SECURE_NO_WARNINGS
+#define _WINSOCK_DEPRECATED_NO_WARNINGS
 #undef UNICODE
 
 #define WIN32_LEAN_AND_MEAN
@@ -9,7 +10,7 @@
 #include <winsock2.h>
 #include <windows.h>
 #include <ws2tcpip.h>
-
+#include <vector>
 #pragma comment (lib, "Ws2_32.lib")
 
 typedef std::uint64_t hash_t;
@@ -35,6 +36,9 @@ constexpr unsigned long long operator "" _hash(char const* p, size_t)
 {
 	return hash_compile_time(p);
 }
+
+char* hexToCharIP(struct in_addr addrIP);
+
 
 class Server
 {
@@ -62,6 +66,8 @@ public:
 			return 1;
 		}
 		memset((&hints), 0, (sizeof(hints)));
+		memset(&result, 0, sizeof(result));
+
 		hints.ai_family = AF_INET;
 		hints.ai_socktype = SOCK_STREAM;
 		hints.ai_protocol = IPPROTO_TCP;
@@ -153,11 +159,11 @@ public:
 	const char* Server_Port;
 	int CurrentClientNumber = 0;
 	SOCKET listenSocket = INVALID_SOCKET;
-	SOCKET clientSocket[20];
-	std::string clientName[20];
-	int clientNumber[20];
-	IN_ADDR  clientIP[20];
-	int clientPort[20];
+	SOCKET clientSocket[20];						//用戶Socket
+	std::string clientName[20];						//用戶名稱 默認unknown
+	int clientNumber[20];							//用戶編號 默認-1
+	char* clientIP[20];							//用戶IP
+	int clientPort[20];								//用戶port 
 
 private:
 	int iResult;
@@ -166,10 +172,9 @@ private:
 	struct addrinfo hints;
 	WSADATA wsaData;
 	int optval = 1;
-	typedef std::uint64_t hash_t;
-	const hash_t prime = 0x100000001B3ull;
-	const hash_t basis = 0xCBF29CE484222325ull;
 };
+
+
 
 //clientIO (thread callback)
 int clientIO(Server s)
@@ -181,29 +186,29 @@ int clientIO(Server s)
 		int bytesRead = recv(s.clientSocket[i], buffer, sizeof(buffer), 0);
 		if (bytesRead == -1)
 		{
-			std::cout << "\n[第" << i << "號client回傳] : 異常斷開\n\n";
+			std::cout << "\n[系統][第" << i << "號][" << s.clientName[i] << "] : 異常斷開\n\n";
 			std::cout << "\n請輸入: " << std::endl;
 			closesocket(s.clientSocket[i]);
+			return 1;
 		}
 
-
-		//char sa[sizeof(bytesReceived)];
-		//std::cout << buffer << std::endl;
 		buffer[bytesRead] = '\0';
 		switch (hash_(buffer))
 		{
+		case "personal_information"_hash:
+			//傳輸 編號  名稱 IP Port
+			std::cout << "\n[系統][第" << i << "號][" << s.clientName[i] << "] : 請求個人資訊\n\n";
+			send(s.clientSocket[i], s.clientIP[i], (int)strlen(s.clientIP[i]), 0);
+			break;
 		case "client_close"_hash:
-			std::cout << "\n[第" << i << "號client回傳] : 斷開連接\n\n";
+			std::cout << "\n[系統][第" << i << "號][" << s.clientName[i] << "] : 斷開連接\n\n";
 			std::cout << "\n請輸入: ";
 			shutdown(s.clientSocket[i], SD_BOTH);
 			closesocket(s.clientSocket[i]);
 			return 0;
 			break;
 		case "send"_hash:
-			std::cout << "\n[第" << i << "號client回傳]說 : ";
-			break;
-		case "third"_hash:
-			std::cout << "3rd one" << std::endl;
+			std::cout << "\n[系統][第" << i << "號][" << s.clientName[i] << "]說 : \n\n";
 			break;
 		default:
 			std::cout << "\n[第" << i << "號client回傳] : 輸入錯誤或無此指令...\n\n";
@@ -215,22 +220,22 @@ int clientIO(Server s)
 //acceptClient (thread callback)
 int acceptClient(Server s)
 {
+	char client_ip[INET_ADDRSTRLEN];
 	while (1)
 	{
 		//開始等待客戶端, 等到後傳入
-
-		SOCKADDR_IN clientAddr;
-		int clientAddrSize = sizeof(clientAddr);
-		s.clientSocket[s.CurrentClientNumber] = accept(s.listenSocket, (SOCKADDR*)&clientAddr, &clientAddrSize);
+		struct sockaddr_in  client_addr;
+		int clientAddrSize = sizeof(client_addr);
+		s.clientSocket[s.CurrentClientNumber] = accept(s.listenSocket, (SOCKADDR*)&client_addr, &clientAddrSize);
 		if (s.clientSocket[s.CurrentClientNumber] == INVALID_SOCKET)
 		{
 			std::cout << "\nsocket accept failed with error: " << WSAGetLastError() << "\n\n";
 			return 1;
 		}
 		s.clientNumber[s.CurrentClientNumber] = s.CurrentClientNumber;
-		s.clientIP[s.CurrentClientNumber] = clientAddr.sin_addr;
-		s.clientPort[s.CurrentClientNumber] = clientAddr.sin_port;
-		std::cout << "\n[客戶接收信息] : 第" << s.CurrentClientNumber << "個客戶端加入了\n\n";
+		s.clientIP[s.CurrentClientNumber] = inet_ntoa(client_addr.sin_addr);
+		s.clientPort[s.CurrentClientNumber] = ntohs(client_addr.sin_port);
+		std::cout << "\n[系統][客戶接收] : 第" << s.CurrentClientNumber << "個客戶端加入了\n\n";
 		std::thread clientIOa(clientIO, s);
 		clientIOa.detach();
 		s.CurrentClientNumber += 1;
@@ -247,3 +252,5 @@ int main()
 
 	return 0;
 }
+
+
