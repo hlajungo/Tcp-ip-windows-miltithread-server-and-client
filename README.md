@@ -1,2 +1,2 @@
 # Tcp-ip-windows-miltithread-server-and-client
-D:
+目前能成功運行 + 用戶輸入關閉
