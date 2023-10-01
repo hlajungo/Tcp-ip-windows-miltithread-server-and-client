@@ -96,13 +96,13 @@ public:
 		// 開始傳輸
 		std::cout << "[客戶端]\n";
 		std::cout << "------功能介紹------\n";
-		std::cout << "顯示個人資訊 輸入 : personal_information \n";
-		std::cout << " \n";
-		std::cout << "關掉客戶端 輸入: client_close \n";
+		std::cout << "顯示個人資訊		輸入 : personal_information \n";
+		std::cout << "更改名稱			輸入 : change_name_[名稱]\n";
+		std::cout << "關掉客戶端		輸入: client_close \n";
 		std::cout << "--------------------\n";
 		std::cout << "請輸入 : ";
 		//data會傳送後由server處理, 並且client也會有一套處理系統
-		while (std::cin >> sendbuf)
+		while (std::cin.getline(sendbuf, sizeof(sendbuf) ))
 		{
 			memset(recvbuf, 0, sizeof(recvbuf));
 			iResult = send(ConnectSocket, sendbuf, (int)strlen(sendbuf), 0);
@@ -125,11 +125,9 @@ public:
 					WSACleanup();
 					return 1;
 				}
-			
-				std::cout << "[系統]你的IP : " << recvbuf << "\n";
+				std::cout << recvbuf;
 				std::cout << "請輸入:";
 					 
-
 				break;
 			case "client_close"_hash:
 				iResult = shutdown(ConnectSocket, SD_BOTH);

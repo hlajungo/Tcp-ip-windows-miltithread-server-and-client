@@ -37,7 +37,6 @@ constexpr unsigned long long operator "" _hash(char const* p, size_t)
 	return hash_compile_time(p);
 }
 
-char* hexToCharIP(struct in_addr addrIP);
 
 
 class Server
@@ -51,9 +50,9 @@ public:
 		this->Server_Port = port;
 		for (int i = 0; i < 10; i++)
 		{
-			this->clientName[i] = "unknown";
-			this->clientSocket[i] = INVALID_SOCKET;
-			this->clientNumber[i] = -1;
+			clientName[i] = "unknown";
+			clientSocket[i] = INVALID_SOCKET;
+			isAccessable[i] = false;
 		}
 	}
 
@@ -111,28 +110,44 @@ public:
 	}
 
 	//Server::ControlPanel()
-	int ControlPanel()
+	int ControlPanel(Server &s)
 	{
 		std::cout << "[伺服器]\n";
 		std::cout << "------功能介紹------\n";
-		std::cout << "關掉伺服器 輸入: server_close \n";
+		std::cout << "以編號查詢客戶端信息		輸入: search_client_by_number [0-20之間的數字]\n";
+		std::cout << "關掉伺服器			輸入: server_close \n";
 		std::cout << "--------------------\n";
 		std::cout << "請輸入 : ";
-		char command[1024];
-		while (std::cin >> command)
+
+		while (std::cin >> s.command_char)//(std::cin.getline(command, sizeof(command)))
 		{
-			switch (hash_(command))
+			switch (hash_(s.command_char))
 			{
 			case "server_close"_hash:
 				std::cout << "[控制面板] : 結束所有通訊\n\n";
 				CloseServer();
 				return 0;
 				break;
-			case "second"_hash:
-				std::cout << "2nd one\n";
+
+			case "search_client_by_number"_hash:
+				std::cin >> s.command_int;
+				std::cout << "s.command_int " << s.command_int <<"\n";
+				std::cout << "s.clientNumber[s.command_int] " << s.clientNumber[s.command_int] << "\n";
+
+				if (s.clientNumber[s.command_int] == -1)
+				{
+					std::cout << "你要求的客戶端編號尚未使用...... \n";
+					std::cout << "請輸入 : ";
+					break;
+				}
+				std::cout << "[系統]編號"<<s.command_int << "的編號		: " << s.clientNumber[command_int] << "\n";
+				std::cout << "[系統]編號"<<s.command_int << "的名稱		: " << s.clientName[command_int] << "\n";
+				std::cout << "[系統]編號"<<s.command_int << "的IP		: " << s.clientIP[command_int] << "\n";
+				std::cout << "[系統]編號"<<s.command_int << "的Port		: " << s.clientPort[command_int] << "\n\n";
+				std::cout << "請輸入 : ";
 				break;
 			case "third"_hash:
-				std::cout << "3rd one\n";
+
 				break;
 			default:
 				std::cout << "[控制面板] : 輸入錯誤或無此指令...\n";
@@ -154,6 +169,12 @@ public:
 		return 0;
 	}
 
+	//Server::Search_Client_By_Number
+	int Search_Client_By_Number(Server s)
+	{
+
+		return 0;
+	}
 public:
 	const char* Server_IP;
 	const char* Server_Port;
@@ -162,28 +183,28 @@ public:
 	SOCKET clientSocket[20];						//用戶Socket
 	std::string clientName[20];						//用戶名稱 默認unknown
 	int clientNumber[20];							//用戶編號 默認-1
-	char* clientIP[20];							//用戶IP
+	char* clientIP[20];								//用戶IP
 	int clientPort[20];								//用戶port 
-
+	std::string Send_Buffer[20];
 private:
 	int iResult;
-	bool isCloseServer = false;
+	bool isAccessable[20] ;
 	struct addrinfo* result = NULL;
 	struct addrinfo hints;
 	WSADATA wsaData;
 	int optval = 1;
+	char command_char[1024];
+	int command_int;
 };
 
-
-
 //clientIO (thread callback)
-int clientIO(Server s)
+int clientIO(Server &s)
 {
-	char buffer[1024];
+	char Recv_Buffer[1024];
 	int i = s.CurrentClientNumber;
 	while (true) {
-		memset(buffer, 0, sizeof(buffer));
-		int bytesRead = recv(s.clientSocket[i], buffer, sizeof(buffer), 0);
+		memset(Recv_Buffer, 0, sizeof(Recv_Buffer));
+		int bytesRead = recv(s.clientSocket[i], Recv_Buffer, sizeof(Recv_Buffer), 0);
 		if (bytesRead == -1)
 		{
 			std::cout << "\n[系統][第" << i << "號][" << s.clientName[i] << "] : 異常斷開\n\n";
@@ -192,13 +213,17 @@ int clientIO(Server s)
 			return 1;
 		}
 
-		buffer[bytesRead] = '\0';
-		switch (hash_(buffer))
+		Recv_Buffer[bytesRead] = '\0';
+		switch (hash_(Recv_Buffer))
 		{
 		case "personal_information"_hash:
+
+			s.Send_Buffer[i] = "[系統]你的編號	 : " + std::to_string(s.clientNumber[i]) + "\n[系統]你的名稱	 : " + s.clientName[i] + "\n[系統]你的IP	 : " + s.clientIP[i] + "\n[系統]你的Port	 : " + std::to_string(s.clientPort[i]) + "\n\n";
+
 			//傳輸 編號  名稱 IP Port
 			std::cout << "\n[系統][第" << i << "號][" << s.clientName[i] << "] : 請求個人資訊\n\n";
-			send(s.clientSocket[i], s.clientIP[i], (int)strlen(s.clientIP[i]), 0);
+			send(s.clientSocket[i], (s.Send_Buffer[i].c_str()), (int)strlen(s.Send_Buffer[i].c_str()), 0);
+
 			break;
 		case "client_close"_hash:
 			std::cout << "\n[系統][第" << i << "號][" << s.clientName[i] << "] : 斷開連接\n\n";
@@ -218,7 +243,7 @@ int clientIO(Server s)
 }
 
 //acceptClient (thread callback)
-int acceptClient(Server s)
+Server acceptClient(Server &s)
 {
 	char client_ip[INET_ADDRSTRLEN];
 	while (1)
@@ -230,13 +255,15 @@ int acceptClient(Server s)
 		if (s.clientSocket[s.CurrentClientNumber] == INVALID_SOCKET)
 		{
 			std::cout << "\nsocket accept failed with error: " << WSAGetLastError() << "\n\n";
-			return 1;
+			exit(0);
 		}
 		s.clientNumber[s.CurrentClientNumber] = s.CurrentClientNumber;
 		s.clientIP[s.CurrentClientNumber] = inet_ntoa(client_addr.sin_addr);
 		s.clientPort[s.CurrentClientNumber] = ntohs(client_addr.sin_port);
+		
 		std::cout << "\n[系統][客戶接收] : 第" << s.CurrentClientNumber << "個客戶端加入了\n\n";
-		std::thread clientIOa(clientIO, s);
+		std::cout << "請輸入 : ";
+		std::thread clientIOa(clientIO, std::ref(s));
 		clientIOa.detach();
 		s.CurrentClientNumber += 1;
 	}
@@ -246,11 +273,13 @@ int main()
 {
 	Server s("192.168.1.200", "8080");
 	s.ServerInit();
-	std::thread clientThread(acceptClient, s);
+	std::thread clientThread(acceptClient, std::ref(s));
 	clientThread.detach();
-	s.ControlPanel();
+	s.ControlPanel(s);
 
 	return 0;
 }
 
 
+//筆記 數據的更新值 似乎是他傳入時的值 需要殺掉處理 重新執行 更新數據
+//新的client進入 我們需要為s.ControlPanel(s);更新數據
