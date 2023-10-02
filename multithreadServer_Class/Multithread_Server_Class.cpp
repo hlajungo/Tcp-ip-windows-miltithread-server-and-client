@@ -1,4 +1,4 @@
-#define _CRT_SECURE_NO_WARNINGS
+ï»¿#define _CRT_SECURE_NO_WARNINGS
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
 #undef UNICODE
 
@@ -112,46 +112,60 @@ public:
 	//Server::ControlPanel()
 	int ControlPanel(Server &s)
 	{
-		std::cout << "[¦øªA¾¹]\n";
-		std::cout << "------¥\¯à¤¶²Ð------\n";
-		std::cout << "¥H½s¸¹¬d¸ß«È¤áºÝ«H®§		¿é¤J: search_client_by_number [0-20¤§¶¡ªº¼Æ¦r]\n";
-		std::cout << "Ãö±¼¦øªA¾¹			¿é¤J: server_close \n";
+		std::cout << "[ä¼ºæœå™¨]\n";
+		std::cout << "------åŠŸèƒ½ä»‹ç´¹------\n";
+		std::cout << "ä»¥ç·¨è™ŸæŸ¥è©¢å®¢æˆ¶ç«¯ä¿¡æ¯		è¼¸å…¥: search_client_by_number [0-20ä¹‹é–“çš„æ•¸å­—]\n";
+		std::cout << "éæ­·å®¢æˆ¶ç«¯ä¿¡æ¯			è¼¸å…¥: traversal_client\n";
+		std::cout << "é—œæŽ‰ä¼ºæœå™¨			è¼¸å…¥: server_close \n";
 		std::cout << "--------------------\n";
-		std::cout << "½Ð¿é¤J : ";
+		std::cout << "è«‹è¼¸å…¥ : ";
 
 		while (std::cin >> s.command_char)//(std::cin.getline(command, sizeof(command)))
 		{
 			switch (hash_(s.command_char))
 			{
 			case "server_close"_hash:
-				std::cout << "[±±¨î­±ªO] : µ²§ô©Ò¦³³q°T\n\n";
+				std::cout << "[æŽ§åˆ¶é¢æ¿] : çµæŸæ‰€æœ‰é€šè¨Š\n\n";
 				CloseServer();
 				return 0;
-				break;
 
+				break;
 			case "search_client_by_number"_hash:
 				std::cin >> s.command_int;
-				std::cout << "s.command_int " << s.command_int <<"\n";
-				std::cout << "s.clientNumber[s.command_int] " << s.clientNumber[s.command_int] << "\n";
 
 				if (s.clientNumber[s.command_int] == -1)
 				{
-					std::cout << "§A­n¨Dªº«È¤áºÝ½s¸¹©|¥¼¨Ï¥Î...... \n";
-					std::cout << "½Ð¿é¤J : ";
+					std::cout << "ä½ è¦æ±‚çš„å®¢æˆ¶ç«¯ç·¨è™Ÿå°šæœªä½¿ç”¨...... \n";
+					std::cout << "è«‹è¼¸å…¥ : ";
 					break;
 				}
-				std::cout << "[¨t²Î]½s¸¹"<<s.command_int << "ªº½s¸¹		: " << s.clientNumber[command_int] << "\n";
-				std::cout << "[¨t²Î]½s¸¹"<<s.command_int << "ªº¦WºÙ		: " << s.clientName[command_int] << "\n";
-				std::cout << "[¨t²Î]½s¸¹"<<s.command_int << "ªºIP		: " << s.clientIP[command_int] << "\n";
-				std::cout << "[¨t²Î]½s¸¹"<<s.command_int << "ªºPort		: " << s.clientPort[command_int] << "\n\n";
-				std::cout << "½Ð¿é¤J : ";
+				std::cout << "[ç³»çµ±]ç·¨è™Ÿ"<<s.command_int << "çš„ç·¨è™Ÿ		: " << s.clientNumber[command_int] << "\n";
+				std::cout << "[ç³»çµ±]ç·¨è™Ÿ"<<s.command_int << "çš„åç¨±		: " << s.clientName[command_int] << "\n";
+				std::cout << "[ç³»çµ±]ç·¨è™Ÿ"<<s.command_int << "çš„IP		: " << s.clientIP[command_int] << "\n";
+				std::cout << "[ç³»çµ±]ç·¨è™Ÿ"<<s.command_int << "çš„Port		: " << s.clientPort[command_int] << "\n\n";
+				std::cout << "è«‹è¼¸å…¥ : ";
+
 				break;
-			case "third"_hash:
+			case "traversal_client"_hash:
+				if (s.CurrentClientNumber == 0)
+				{
+					std::cout << "ç›®å‰æ²’æœ‰å®¢æˆ¶ç«¯......";
+					break;
+				}
+				std::cout << "ç›®å‰æœ‰" << s.CurrentClientNumber << " / 20å€‹å®¢æˆ¶ç«¯ä½¿ç”¨ä¸­......\n";
+				for (int i = 0; i < s.CurrentClientNumber; i++)
+				{
+					std::cout << "[ç³»çµ±]ç·¨è™Ÿ" << i << "çš„ç·¨è™Ÿ		: " << s.clientNumber[i] << "\n";
+					std::cout << "[ç³»çµ±]ç·¨è™Ÿ" << i << "çš„åç¨±		: " << s.clientName[i] << "\n";
+					std::cout << "[ç³»çµ±]ç·¨è™Ÿ" << i << "çš„IP			: " << s.clientIP[i] << "\n";
+					std::cout << "[ç³»çµ±]ç·¨è™Ÿ" << i << "çš„Port		: " << s.clientPort[i] << "\n\n";
+				}
+				std::cout << "è«‹è¼¸å…¥ : ";
 
 				break;
 			default:
-				std::cout << "[±±¨î­±ªO] : ¿é¤J¿ù»~©ÎµL¦¹«ü¥O...\n";
-				std::cout << "½Ð¿é¤J : ";
+				std::cout << "[æŽ§åˆ¶é¢æ¿] : è¼¸å…¥éŒ¯èª¤æˆ–ç„¡æ­¤æŒ‡ä»¤...\n";
+				std::cout << "è«‹è¼¸å…¥ : ";
 			}
 		}
 	}
@@ -180,11 +194,11 @@ public:
 	const char* Server_Port;
 	int CurrentClientNumber = 0;
 	SOCKET listenSocket = INVALID_SOCKET;
-	SOCKET clientSocket[20];						//¥Î¤áSocket
-	std::string clientName[20];						//¥Î¤á¦WºÙ Àq»{unknown
-	int clientNumber[20];							//¥Î¤á½s¸¹ Àq»{-1
-	char* clientIP[20];								//¥Î¤áIP
-	int clientPort[20];								//¥Î¤áport 
+	SOCKET clientSocket[20];						//ç”¨æˆ¶Socket
+	std::string clientName[20];						//ç”¨æˆ¶åç¨± é»˜èªunknown
+	int clientNumber[20];							//ç”¨æˆ¶ç·¨è™Ÿ é»˜èª-1
+	char* clientIP[20];								//ç”¨æˆ¶IP
+	int clientPort[20];								//ç”¨æˆ¶port 
 	std::string Send_Buffer[20];
 private:
 	int iResult;
@@ -207,8 +221,8 @@ int clientIO(Server &s)
 		int bytesRead = recv(s.clientSocket[i], Recv_Buffer, sizeof(Recv_Buffer), 0);
 		if (bytesRead == -1)
 		{
-			std::cout << "\n[¨t²Î][²Ä" << i << "¸¹][" << s.clientName[i] << "] : ²§±`Â_¶}\n\n";
-			std::cout << "\n½Ð¿é¤J: " << std::endl;
+			std::cout << "\n[ç³»çµ±][ç¬¬" << i << "è™Ÿ][" << s.clientName[i] << "] : ç•°å¸¸æ–·é–‹\n\n";
+			std::cout << "\nè«‹è¼¸å…¥: " << std::endl;
 			closesocket(s.clientSocket[i]);
 			return 1;
 		}
@@ -218,26 +232,26 @@ int clientIO(Server &s)
 		{
 		case "personal_information"_hash:
 
-			s.Send_Buffer[i] = "[¨t²Î]§Aªº½s¸¹	 : " + std::to_string(s.clientNumber[i]) + "\n[¨t²Î]§Aªº¦WºÙ	 : " + s.clientName[i] + "\n[¨t²Î]§AªºIP	 : " + s.clientIP[i] + "\n[¨t²Î]§AªºPort	 : " + std::to_string(s.clientPort[i]) + "\n\n";
+			s.Send_Buffer[i] = "[ç³»çµ±]ä½ çš„ç·¨è™Ÿ	 : " + std::to_string(s.clientNumber[i]) + "\n[ç³»çµ±]ä½ çš„åç¨±	 : " + s.clientName[i] + "\n[ç³»çµ±]ä½ çš„IP		: " + s.clientIP[i] + "\n[ç³»çµ±]ä½ çš„Port	 : " + std::to_string(s.clientPort[i]) + "\n\n";
 
-			//¶Ç¿é ½s¸¹  ¦WºÙ IP Port
-			std::cout << "\n[¨t²Î][²Ä" << i << "¸¹][" << s.clientName[i] << "] : ½Ð¨D­Ó¤H¸ê°T\n\n";
+			//å‚³è¼¸ ç·¨è™Ÿ  åç¨± IP Port
+			std::cout << "\n[ç³»çµ±][ç¬¬" << i << "è™Ÿ][" << s.clientName[i] << "] : è«‹æ±‚å€‹äººè³‡è¨Š\n\n";
 			send(s.clientSocket[i], (s.Send_Buffer[i].c_str()), (int)strlen(s.Send_Buffer[i].c_str()), 0);
 
 			break;
 		case "client_close"_hash:
-			std::cout << "\n[¨t²Î][²Ä" << i << "¸¹][" << s.clientName[i] << "] : Â_¶}³s±µ\n\n";
-			std::cout << "\n½Ð¿é¤J: ";
+			std::cout << "\n[ç³»çµ±][ç¬¬" << i << "è™Ÿ][" << s.clientName[i] << "] : æ–·é–‹é€£æŽ¥\n\n";
+			std::cout << "\nè«‹è¼¸å…¥: ";
 			shutdown(s.clientSocket[i], SD_BOTH);
 			closesocket(s.clientSocket[i]);
 			return 0;
 			break;
 		case "send"_hash:
-			std::cout << "\n[¨t²Î][²Ä" << i << "¸¹][" << s.clientName[i] << "]»¡ : \n\n";
+			std::cout << "\n[ç³»çµ±][ç¬¬" << i << "è™Ÿ][" << s.clientName[i] << "]èªª : \n\n";
 			break;
 		default:
-			std::cout << "\n[²Ä" << i << "¸¹client¦^¶Ç] : ¿é¤J¿ù»~©ÎµL¦¹«ü¥O...\n\n";
-			std::cout << "\n½Ð¿é¤J : ";
+			std::cout << "\n[ç¬¬" << i << "è™Ÿclientå›žå‚³] : è¼¸å…¥éŒ¯èª¤æˆ–ç„¡æ­¤æŒ‡ä»¤...\n\n";
+			std::cout << "\nè«‹è¼¸å…¥ : ";
 		}
 	}
 }
@@ -248,7 +262,7 @@ Server acceptClient(Server &s)
 	char client_ip[INET_ADDRSTRLEN];
 	while (1)
 	{
-		//¶}©lµ¥«Ý«È¤áºÝ, µ¥¨ì«á¶Ç¤J
+		//é–‹å§‹ç­‰å¾…å®¢æˆ¶ç«¯, ç­‰åˆ°å¾Œå‚³å…¥
 		struct sockaddr_in  client_addr;
 		int clientAddrSize = sizeof(client_addr);
 		s.clientSocket[s.CurrentClientNumber] = accept(s.listenSocket, (SOCKADDR*)&client_addr, &clientAddrSize);
@@ -261,10 +275,11 @@ Server acceptClient(Server &s)
 		s.clientIP[s.CurrentClientNumber] = inet_ntoa(client_addr.sin_addr);
 		s.clientPort[s.CurrentClientNumber] = ntohs(client_addr.sin_port);
 		
-		std::cout << "\n[¨t²Î][«È¤á±µ¦¬] : ²Ä" << s.CurrentClientNumber << "­Ó«È¤áºÝ¥[¤J¤F\n\n";
-		std::cout << "½Ð¿é¤J : ";
+		std::cout << "\n[ç³»çµ±][å®¢æˆ¶æŽ¥æ”¶] : ç¬¬" << s.CurrentClientNumber << "å€‹å®¢æˆ¶ç«¯åŠ å…¥äº†\n\n";
+		std::cout << "è«‹è¼¸å…¥ : ";
 		std::thread clientIOa(clientIO, std::ref(s));
 		clientIOa.detach();
+		Sleep(1);
 		s.CurrentClientNumber += 1;
 	}
 }
@@ -280,6 +295,3 @@ int main()
 	return 0;
 }
 
-
-//µ§°O ¼Æ¾Úªº§ó·s­È ¦ü¥G¬O¥L¶Ç¤J®Éªº­È »Ý­n±þ±¼³B²z ­«·s°õ¦æ §ó·s¼Æ¾Ú
-//·sªºclient¶i¤J §Ú­Ì»Ý­n¬°s.ControlPanel(s);§ó·s¼Æ¾Ú
