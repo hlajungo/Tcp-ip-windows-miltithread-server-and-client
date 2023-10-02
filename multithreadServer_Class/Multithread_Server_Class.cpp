@@ -52,7 +52,7 @@ public:
 		{
 			clientName[i] = "unknown";
 			clientSocket[i] = INVALID_SOCKET;
-			isAccessable[i] = false;
+			clientNumber[i] = -1;
 		}
 	}
 
@@ -116,23 +116,24 @@ public:
 		std::cout << "------功能介紹------\n";
 		std::cout << "以編號查詢客戶端信息		輸入: search_client_by_number [0-20之間的數字]\n";
 		std::cout << "遍歷客戶端信息			輸入: traversal_client\n";
+		std::cout << "移除客戶端			輸入: kick [[0-20之間的數字]\n";
 		std::cout << "關掉伺服器			輸入: server_close \n";
 		std::cout << "--------------------\n";
 		std::cout << "請輸入 : ";
 
-		while (std::cin >> s.command_char)//(std::cin.getline(command, sizeof(command)))
+		while (std::cin >> s.command_char)
 		{
+			//所有send去client的, client也會有一套處理系統
 			switch (hash_(s.command_char))
 			{
 			case "server_close"_hash:
 				std::cout << "[控制面板] : 結束所有通訊\n\n";
-				CloseServer();
+				CloseServer(s);
 				return 0;
 
 				break;
 			case "search_client_by_number"_hash:
 				std::cin >> s.command_int;
-
 				if (s.clientNumber[s.command_int] == -1)
 				{
 					std::cout << "你要求的客戶端編號尚未使用...... \n";
@@ -163,6 +164,34 @@ public:
 				std::cout << "請輸入 : ";
 
 				break;
+			case "kick"_hash:
+				std::cin >> s.command_int;
+				if (s.clientNumber[s.command_int] == -1)
+				{
+					std::cout << "你要求的客戶端編號尚未使用...... \n";
+					std::cout << "請輸入 : ";
+					break;
+				}
+				bytesSend = send(s.clientSocket[command_int], "kick", sizeof("kick"), 0);
+				if (bytesSend == -1)
+				{
+					std::cout << "send failed with error: " << WSAGetLastError() << "\n";
+					closesocket(s.clientSocket[command_int]);
+					WSACleanup();
+					return 1;
+				}
+				iResult = shutdown(s.clientSocket[command_int], SD_BOTH);
+				if (iResult == SOCKET_ERROR) {
+					std::cout << "shutdown failed with error: " << WSAGetLastError() << "\n";
+					closesocket(s.clientSocket[command_int]);
+					WSACleanup();
+					return 1;
+				}
+				Sleep(1000);
+				closesocket(clientSocket[command_int]);
+
+
+				break;
 			default:
 				std::cout << "[控制面板] : 輸入錯誤或無此指令...\n";
 				std::cout << "請輸入 : ";
@@ -171,11 +200,18 @@ public:
 	}
 
 	//Server::CloseServer()
-	int CloseServer()
+	int CloseServer(Server &s)
 	{
 		closesocket(this->listenSocket);
 		for (int i = 0; i < 10; i++)
 		{
+			iResult = shutdown(s.clientSocket[i], SD_BOTH);
+			if (iResult == SOCKET_ERROR) {
+				std::cout << "shutdown failed with error: " << WSAGetLastError() << "\n";
+				closesocket(s.clientSocket[command_int]);
+				WSACleanup();
+				return 1;
+			}
 			closesocket(clientSocket[i]);
 		}
 		WSACleanup();
@@ -200,9 +236,9 @@ public:
 	char* clientIP[20];								//用戶IP
 	int clientPort[20];								//用戶port 
 	std::string Send_Buffer[20];
+	int bytesSend;
 private:
 	int iResult;
-	bool isAccessable[20] ;
 	struct addrinfo* result = NULL;
 	struct addrinfo hints;
 	WSADATA wsaData;
@@ -212,7 +248,7 @@ private:
 };
 
 //clientIO (thread callback)
-int clientIO(Server &s)
+int clientRevc(Server &s)
 {
 	char Recv_Buffer[1024];
 	int i = s.CurrentClientNumber;
@@ -259,7 +295,6 @@ int clientIO(Server &s)
 //acceptClient (thread callback)
 Server acceptClient(Server &s)
 {
-	char client_ip[INET_ADDRSTRLEN];
 	while (1)
 	{
 		//開始等待客戶端, 等到後傳入
@@ -277,7 +312,7 @@ Server acceptClient(Server &s)
 		
 		std::cout << "\n[系統][客戶接收] : 第" << s.CurrentClientNumber << "個客戶端加入了\n\n";
 		std::cout << "請輸入 : ";
-		std::thread clientIOa(clientIO, std::ref(s));
+		std::thread clientIOa(clientRevc, std::ref(s));
 		clientIOa.detach();
 		Sleep(1);
 		s.CurrentClientNumber += 1;

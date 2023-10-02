@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <iostream>
+#include <thread>
 
 // Need to link with Ws2_32.lib, Mswsock.lib, and Advapi32.lib
 #pragma comment (lib, "Ws2_32.lib")
@@ -91,18 +92,18 @@ public:
 	}
 
 	//Client::clientControlPanel()
-	int clientControlPanel()
+	int clientControlPanel(Client& c)
 	{
 		// 開始傳輸
 		std::cout << "[客戶端]\n";
 		std::cout << "------功能介紹------\n";
 		std::cout << "顯示個人資訊		輸入 : personal_information \n";
-		std::cout << "更改名稱			輸入 : change_name_[名稱]\n";
+		std::cout << "更改名稱		輸入 : set_name [名稱]\n";
 		std::cout << "關掉客戶端		輸入: client_close \n";
 		std::cout << "--------------------\n";
 		std::cout << "請輸入 : ";
-		//data會傳送後由server處理, 並且client也會有一套處理系統
-		while (std::cin.getline(sendbuf, sizeof(sendbuf) ))
+		//data會傳送後由server處理, 並且client也會有一套處理系統, recv有額外處理系統
+		while (std::cin.getline(sendbuf, sizeof(sendbuf)))
 		{
 			memset(recvbuf, 0, sizeof(recvbuf));
 			iResult = send(ConnectSocket, sendbuf, (int)strlen(sendbuf), 0);
@@ -117,17 +118,8 @@ public:
 			switch (hash_(sendbuf))
 			{
 			case"personal_information"_hash:
-				iResult = recv(ConnectSocket, recvbuf, sizeof(recvbuf), 0);
-				if (iResult == -1)
-				{
-					std::cout << "recv failed with error: " << WSAGetLastError() << "\n";
-					closesocket(ConnectSocket);
-					WSACleanup();
-					return 1;
-				}
-				std::cout << recvbuf;
-				std::cout << "請輸入:";
-					 
+
+
 				break;
 			case "client_close"_hash:
 				iResult = shutdown(ConnectSocket, SD_BOTH);
@@ -166,25 +158,67 @@ public:
 	}
 
 public:
-
+	int iResult;
+	SOCKET ConnectSocket = INVALID_SOCKET;
+	char recvbuf[1024];
+	int bytesRead;
 private:
 	WSADATA wsaData;
-	SOCKET ConnectSocket = INVALID_SOCKET;
 	struct addrinfo* result = NULL, * ptr = NULL, hints;
-	int iResult;
 	char sendbuf[1024];
-	char recvbuf[1024];
 	const char* Server_IP;
 	const char* Server_Port;
 
 
 };
 
+int serverRecv(Client& c)
+{
+	while (true)
+	{
+		c.bytesRead = recv(c.ConnectSocket, c.recvbuf, sizeof(c.recvbuf), 0);
+		if (c.bytesRead == -1)
+		{
+			std::cout << "recv failed with error: " << WSAGetLastError() << "\n";
+			closesocket(c.ConnectSocket);
+			WSACleanup();
+			return 1;
+		}
+		c.recvbuf[c.bytesRead] = '\0';
+		switch (hash_(c.recvbuf))
+		{
+		case "kick"_hash:
+			std::cout << "\n[系統][Server回傳] : 你被踢除了...\n\n";
+			c.iResult = shutdown(c.ConnectSocket, SD_BOTH);
+			if (c.iResult == SOCKET_ERROR) {
+				std::cout << "shutdown failed with error: " << WSAGetLastError() << "\n";
+				closesocket(c.ConnectSocket);
+				WSACleanup();
+				return 1;
+			}
+			closesocket(c.ConnectSocket);
+			WSACleanup();
+			system("pause");
+			exit(0);
+			break;
+		default:
+			std::cout << "\n[系統][Server回傳] : Server回傳錯誤或無此指令...\n\n";
+			std::cout << "\n請輸入 : ";
+		}
+
+		std::cout << c.recvbuf;
+		std::cout << "請輸入:";
+	}
+}
+
 int main()
 {
 	Client c("192.168.1.200", "8080");
 	c.ClientInit();
-	c.clientControlPanel();
+	std::thread serverRecva(serverRecv, std::ref(c));
+	serverRecva.detach();
+	c.clientControlPanel(c);
+	
 
 	return 0;
 }
