@@ -11,6 +11,7 @@
 #include <windows.h>
 #include <ws2tcpip.h>
 #include <vector>
+
 #pragma comment (lib, "Ws2_32.lib")
 
 typedef std::uint64_t hash_t;
@@ -142,7 +143,7 @@ public:
 				}
 				std::cout << "[系統]編號"<<s.command_int << "的編號		: " << s.clientNumber[command_int] << "\n";
 				std::cout << "[系統]編號"<<s.command_int << "的名稱		: " << s.clientName[command_int] << "\n";
-				std::cout << "[系統]編號"<<s.command_int << "的IP		: " << s.clientIP[command_int] << "\n";
+				std::cout << "[系統]編號"<<s.command_int << "的IP			: " << s.clientIP[command_int] << "\n";
 				std::cout << "[系統]編號"<<s.command_int << "的Port		: " << s.clientPort[command_int] << "\n\n";
 				std::cout << "請輸入 : ";
 
@@ -172,7 +173,8 @@ public:
 					std::cout << "請輸入 : ";
 					break;
 				}
-				bytesSend = send(s.clientSocket[command_int], "kick", sizeof("kick"), 0);
+				s.Send_Buffer[s.command_int] = "kick";
+				bytesSend = send(s.clientSocket[command_int], (s.Send_Buffer[command_int].c_str()), (int)strlen(s.Send_Buffer[command_int].c_str()), 0);
 				if (bytesSend == -1)
 				{
 					std::cout << "send failed with error: " << WSAGetLastError() << "\n";
@@ -180,14 +182,13 @@ public:
 					WSACleanup();
 					return 1;
 				}
-				iResult = shutdown(s.clientSocket[command_int], SD_BOTH);
+				iResult = shutdown(s.clientSocket[command_int], SD_RECEIVE);
 				if (iResult == SOCKET_ERROR) {
 					std::cout << "shutdown failed with error: " << WSAGetLastError() << "\n";
 					closesocket(s.clientSocket[command_int]);
 					WSACleanup();
 					return 1;
 				}
-				Sleep(1000);
 				closesocket(clientSocket[command_int]);
 
 
@@ -267,13 +268,19 @@ int clientRevc(Server &s)
 		switch (hash_(Recv_Buffer))
 		{
 		case "personal_information"_hash:
-
-			s.Send_Buffer[i] = "[系統]你的編號	 : " + std::to_string(s.clientNumber[i]) + "\n[系統]你的名稱	 : " + s.clientName[i] + "\n[系統]你的IP		: " + s.clientIP[i] + "\n[系統]你的Port	 : " + std::to_string(s.clientPort[i]) + "\n\n";
-
-			//傳輸 編號  名稱 IP Port
 			std::cout << "\n[系統][第" << i << "號][" << s.clientName[i] << "] : 請求個人資訊\n\n";
-			send(s.clientSocket[i], (s.Send_Buffer[i].c_str()), (int)strlen(s.Send_Buffer[i].c_str()), 0);
+			std::cout << "請輸入 : ";
 
+			 s.Send_Buffer[i] = "[系統]你的編號	 : " + std::to_string(s.clientNumber[i]) + "\n[系統]你的名稱	 : " + s.clientName[i] + "\n[系統]你的IP	: " + s.clientIP[i] + "\n[系統]你的Port	 : " + std::to_string(s.clientPort[i]) + "\n\n";
+			//傳輸 編號  名稱 IP Port
+			s.bytesSend = send(s.clientSocket[i], (s.Send_Buffer[i].c_str()), (int)strlen(s.Send_Buffer[i].c_str()), 0);
+			if(s.bytesSend == -1)
+			{
+				std::cout << "send failed with error: " << WSAGetLastError() << "\n";
+				closesocket(s.clientSocket[i]);
+				WSACleanup();
+				return 1;
+			}
 			break;
 		case "client_close"_hash:
 			std::cout << "\n[系統][第" << i << "號][" << s.clientName[i] << "] : 斷開連接\n\n";
