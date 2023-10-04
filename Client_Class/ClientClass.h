@@ -8,7 +8,7 @@
 #include <iostream>
 #include <thread>
 
-// Need to link with Ws2_32.lib, Mswsock.lib, and Advapi32.lib
+//link with Ws2_32.lib, Mswsock.lib, and Advapi32.lib
 #pragma comment (lib, "Ws2_32.lib")
 #pragma comment (lib, "Mswsock.lib")
 #pragma comment (lib, "AdvApi32.lib")
@@ -32,7 +32,7 @@ public:
 	//Client::serverRecv() _給子線程回調 接收伺服器回傳
 	int serverRecv(Client& c);
 
-	//Client:: Client_Instructions() _一段描述功能的文字
+	//Client:: Client_Instructions() _提供客戶端說明文字
 	void Client_Instructions();
 
 	//Client::Client_Close() __關閉client

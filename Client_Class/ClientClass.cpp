@@ -51,7 +51,7 @@ int Client::ClientInit()
 	}
 }
 
-//Client::clientControlPanel()
+//Client::clientControlPanel() _占用主線程 處理用戶輸入
 int Client::clientControlPanel(Client& c)
 {
 	Client_Instructions();
@@ -127,7 +127,7 @@ int Client::serverRecv(Client& c)
 	}
 }
 
-//Client:: Client_Instructions() _給clientControlPanel使用
+//Client:: Client_Instructions() _提供客戶端說明文字
 void Client::Client_Instructions()
 {
 	std::cout << "[客戶端]\n";
@@ -140,7 +140,7 @@ void Client::Client_Instructions()
 
 }
 
-//Client::Client_Close() __關閉client
+//Client::Client_Close() _關閉client
 int Client::Client_Close()
 {
 	iResult = shutdown(ConnectSocket, SD_BOTH);

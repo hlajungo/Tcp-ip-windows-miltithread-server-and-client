@@ -7,7 +7,7 @@
 
 int main()
 {
-	Client c("192.168.1.200", "8080");
+	Client c("192.168.1.73", "8080");
 	c.ClientInit();
 	std::thread serverRecva([&c]() {
 		c.serverRecv(c); 
