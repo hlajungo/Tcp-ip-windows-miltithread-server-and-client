@@ -38,6 +38,9 @@ public:
 	//Client::Client_Close() __Ãö³¬client
 	int Client_Close();
 
+	//Client::Client_Send_To_Server() _¶Ç¿éµ¹Server
+	int Client_Send_To_Server();
+
 public:
 	int iResult;
 	int bytesRead;

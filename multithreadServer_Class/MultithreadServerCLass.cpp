@@ -2,6 +2,8 @@
 
 #include "MultithreadServerCLass.h"
 
+//----------------
+
 //Server::ControlPanel() __占用主線程 處理用戶輸入
 int Server::ControlPanel(Server& s)
 {
@@ -20,14 +22,22 @@ int Server::ControlPanel(Server& s)
 
 			break;
 		case "search_client_by_number"_hash:
-			search_client_by_number(s);
+			search_client_by_Client_Number(s);
 			break;
 		case "traversal_client"_hash:
 			traversal_client(s);
 
 			break;
 		case "kick"_hash:
-			kick(s);
+			kick_by_Client_Number(s);
+
+			break;
+		case "send"_hash:
+			send_to_client_by__Client_Number(s);
+			
+			break;
+		case "send_all"_hash:
+			send_to_all_client(s);
 
 			break;
 		default:
@@ -35,6 +45,8 @@ int Server::ControlPanel(Server& s)
 			std::cout << "請輸入 : ";
 		}
 	}
+
+	return 0;
 }
 
 //Server::clientRevc() _給子線程回調 接收客戶端回傳
@@ -52,7 +64,7 @@ int Server::clientRevc(Server& s)
 			closesocket(s.clientSocket[i]);
 			return 1;
 		}
-
+		
 		Recv_Buffer[bytesRead] = '\0';
 		switch (hash_(Recv_Buffer))
 		{
@@ -65,7 +77,21 @@ int Server::clientRevc(Server& s)
 
 			break;
 		case "send"_hash:
-			std::cout << "\n[系統][第" << i << "號][" << s.clientName[i] << "]說 : \n\n";
+			client_send_to_server(s, Recv_Buffer, i, bytesRead);
+			break;
+		case "set_name"_hash:
+			bytesRead = recv(s.clientSocket[i], Recv_Buffer, sizeof(Recv_Buffer), 0);
+			if (bytesRead == -1)
+			{
+				std::cout << "\n[系統][第" << i << "號][" << s.clientName[i] << "] : 異常斷開\n\n";
+				std::cout << "\n請輸入: " << std::endl;
+				closesocket(s.clientSocket[i]);
+				return 1;
+			}
+			s.clientName[i] = Recv_Buffer;
+			std::cout << "\n[系統][第" << i << "號][" << s.clientName[i] << "]設置名稱為\"" << Recv_Buffer << "\"\n\n";
+			std::cout << "請輸入 : ";
+
 			break;
 		default:
 			std::cout << "\n[第" << i << "號client回傳] : 輸入錯誤或無此指令...\n\n";
@@ -73,6 +99,25 @@ int Server::clientRevc(Server& s)
 		}
 	}
 }
+
+//Server:: Client_Instructions() _提供伺服器說明文字
+void Server::Server_Instruction()
+{
+	std::cout << "[伺服器]\n";																		//
+	std::cout << "------功能介紹------\n";															//
+	std::cout << "伺服器功能介紹			輸入: 功能介紹\n";										//
+	std::cout << "以編號查詢客戶端信息		輸入: search_client_by_number [0-20之間的數字]\n";		//
+	std::cout << "遍歷客戶端信息			輸入: traversal_client\n";								//
+	std::cout << "移除客戶端			輸入: kick [編號0~20]\n";									//
+	std::cout << "關掉伺服器			輸入: server_close \n";										//
+	std::cout << "--------------------\n";															//
+	std::cout << "以編號和指定客戶端說話		輸入: send [編號0~20] [句子]\n";					//
+	std::cout << "發句子給所有客戶端		輸入: send_all [句子]\n";								//
+	std::cout << "--------------------\n";
+	std::cout << "請輸入 : ";
+}
+
+//----------------
 
 //Server::acceptClient() _給子線程回調 接收客戶端加入
 Server Server::acceptClient(Server& s)
@@ -167,6 +212,7 @@ int Server::ServerInit()
 		WSACleanup();
 	}
 
+	return 0;
 }
 
 //Server::CloseServer() _關閉伺服器
@@ -189,20 +235,6 @@ int Server::CloseServer(Server& s)
 	return 0;
 }
 
-//Server:: Client_Instructions() _提供伺服器說明文字
-void Server::Server_Instruction()
-{
-	std::cout << "[伺服器]\n";
-	std::cout << "------功能介紹------\n";
-	std::cout << "伺服器功能介紹			輸入: 功能介紹\n";
-	std::cout << "以編號查詢客戶端信息		輸入: search_client_by_number [0-20之間的數字]\n";
-	std::cout << "遍歷客戶端信息			輸入: traversal_client\n";
-	std::cout << "移除客戶端			輸入: kick [[0-20之間的數字]\n";
-	std::cout << "關掉伺服器			輸入: server_close \n";
-	std::cout << "--------------------\n";
-	std::cout << "請輸入 : ";
-}
-
 //Server::PrintClientInfo() _打印客戶端信息
 void Server::PrintClientInfo(Server &s, int i)
 {
@@ -213,18 +245,14 @@ void Server::PrintClientInfo(Server &s, int i)
 }
 
 //Server::search_client_by_number() _用編號查詢客戶端
-int Server::search_client_by_number(Server &s)
+int Server::search_client_by_Client_Number(Server &s)
 {
 	std::cin >> s.command_int;
-	if (s.clientNumber[s.command_int] == -1)
-	{
-		std::cout << "你要求的客戶端編號尚未使用...... \n";
-		std::cout << "請輸入 : ";
-		return 1;
-	}
+	if (isClientNumberAccessible(s) == false)return 1;
 	PrintClientInfo(s, command_int);
 	std::cout << "請輸入 : ";
 
+	return 0;
 }
 
 //Server::traversal_client() _遍歷客戶端
@@ -241,18 +269,15 @@ int Server::traversal_client(Server& s)
 		PrintClientInfo(s, i);
 	}
 	std::cout << "請輸入 : ";
+
+	return 0;
 }
 
 //Server::kick() _踢除客戶端
-int Server::kick(Server& s)
+int Server::kick_by_Client_Number(Server& s)
 {
 	std::cin >> s.command_int;
-	if (s.clientNumber[s.command_int] == -1)
-	{
-		std::cout << "你要求的客戶端編號尚未使用...... \n";
-		std::cout << "請輸入 : ";
-		return 1;
-	}
+	if (isClientNumberAccessible(s) == false)return 1;
 	s.Send_Buffer[s.command_int] = "kick";
 	bytesSend = send(s.clientSocket[command_int], (s.Send_Buffer[command_int].c_str()), (int)strlen(s.Send_Buffer[command_int].c_str()), 0);
 	if (bytesSend == -1)
@@ -271,6 +296,44 @@ int Server::kick(Server& s)
 	}
 	closesocket(clientSocket[command_int]);
 
+
+	return 0;
+}
+
+//Server::send_to_client() _傳訊息給指定客戶端
+int Server::send_to_client_by__Client_Number(Server& s)
+{
+	std::cin >> command_int;
+	if (isClientNumberAccessible(s) == false)return 1;
+	std::cin.getline(command_char, sizeof(command_char));
+	bytesSend = send(clientSocket[command_int], command_char, (int)strlen(command_char), 0);
+	if (bytesSend == -1)
+	{
+		std::cout << "send failed with error: " << WSAGetLastError() << "\n";
+		closesocket(clientSocket[command_int]);
+		WSACleanup();
+		return 1;
+	}
+	std::cout << "\n請輸入 : ";
+
+	return 0;
+}
+
+int Server::send_to_all_client(Server& s)
+{
+	std::cin.getline(command_char, sizeof(command_char));
+	for (int i = 0; i < s.CurrentClientNumber; i++)
+	{
+		bytesSend = send(clientSocket[i], command_char, (int)strlen(command_char), 0);
+		if (bytesSend == -1)
+		{
+			std::cout << "send failed with error: " << WSAGetLastError() << "\n";
+			closesocket(clientSocket[command_int]);
+			WSACleanup();
+			return 1;
+		}
+	}
+	std::cout << "\n請輸入 : ";
 
 	return 0;
 }
@@ -304,4 +367,35 @@ int Server::client_client_close(Server& s, int i)
 
 	return 0;
 }
+
+int Server::client_send_to_server(Server &s, char* Recv_Buffer, int i, int bytesRead)
+{
+	bytesRead = recv(s.clientSocket[i], Recv_Buffer, sizeof(Recv_Buffer), 0);
+	if (bytesRead == -1)
+	{
+		std::cout << "\n[系統][第" << i << "號][" << s.clientName[i] << "] : 異常斷開\n\n";
+		std::cout << "\n請輸入: " << std::endl;
+		closesocket(s.clientSocket[i]);
+		return 1;
+	}
+	std::cout << "\n[系統][第" << i << "號][" << s.clientName[i] << "]對Server說 :" << Recv_Buffer << "\n\n";
+	return 0;
+}
+
+
+
+
+//----------------
+bool Server::isClientNumberAccessible(Server &s)
+{
+	if (s.clientNumber[s.command_int] == -1 || command_int < 0)
+	{
+		std::cout << "你要求的客戶端編號尚未使用...... \n";
+		std::cout << "請輸入 : ";
+		return false;
+	}
+	return true;
+}
+
+
 

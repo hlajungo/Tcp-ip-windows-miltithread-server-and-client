@@ -2,6 +2,111 @@
 
 #include "ClientClass.h"
 
+//----------------
+
+
+//Client::clientControlPanel() _占用主線程 處理用戶輸入
+int Client::clientControlPanel(Client& c)
+{
+	Client_Instructions();
+	while (std::cin >> sendbuf)
+	{
+		memset(recvbuf, 0, sizeof(recvbuf));
+		iResult = send(ConnectSocket, sendbuf, (int)strlen(sendbuf), 0);
+		if (iResult == SOCKET_ERROR)
+		{
+			std::cout << "send failed with error: " << WSAGetLastError() << "\n";
+			closesocket(ConnectSocket);
+			WSACleanup();
+			return 1;
+		}
+
+		switch (hash_(sendbuf))
+		{
+		case"personal_information"_hash://請勿刪掉, 當輸入personal_information, 理應client不做事
+
+			break;
+		case "client_close"_hash:
+			Client_Close();
+
+			break;
+		case "send"_hash:
+			Client_Send_To_Server();
+
+			break;
+		case "set_name"_hash:
+			std::cin.getline(sendbuf,sizeof(sendbuf));
+			iResult = send(ConnectSocket, sendbuf, (int)strlen(sendbuf), 0);
+			if (iResult == SOCKET_ERROR)
+			{
+				std::cout << "send failed with error: " << WSAGetLastError() << "\n";
+				closesocket(ConnectSocket);
+				WSACleanup();
+				return 1;
+			}
+			std::cout << "請輸入 : ";
+			break;
+		case "send_to_client"_hash:
+
+
+			break;
+
+		default:
+			std::cout << " 輸入錯誤或無此指令\n";
+			std::cout << "\n請輸入 : ";
+			break;
+		}
+	}
+}
+
+//Client::serverRecv() _給子線程回調 接收伺服器回傳
+int Client::serverRecv(Client& c)
+{
+	while (true)
+	{
+		c.bytesRead = recv(c.ConnectSocket, c.recvbuf, sizeof(c.recvbuf), 0);
+		if (c.bytesRead == -1)
+		{
+			std::cout << "recv failed with error: " << WSAGetLastError() << "\n";
+			closesocket(c.ConnectSocket);
+			WSACleanup();
+			exit(0);
+		}
+		c.recvbuf[c.bytesRead] = '\0';
+		switch (hash_(c.recvbuf))
+		{
+		case "kick"_hash:
+			Client_Close();
+
+			break;
+		case "123"_hash:
+			break;
+		default:
+			std::cout << "\n[系統][Server]說 :\n" << c.recvbuf << "\n";
+
+		}
+		std::cout << "\n請輸入:";
+
+	}
+}
+
+//Client:: Client_Instructions() _提供客戶端說明文字
+void Client::Client_Instructions()
+{
+	std::cout << "[客戶端]\n";
+	std::cout << "------功能介紹------\n";
+	std::cout << "顯示個人資訊		輸入 : personal_information \n";
+	std::cout << "更改名稱		輸入 : set_name [名稱]\n";
+	std::cout << "對Server說話		輸入 : send [句子]\n";
+	std::cout << "關掉客戶端		輸入 : client_close \n";
+	std::cout << "--------------------\n";
+	std::cout << "請輸入 : ";
+
+}
+
+
+//----------------
+
 //Client::Client() _構造函數
 Client::Client(const char* ip, const char* port)
 {
@@ -51,95 +156,6 @@ int Client::ClientInit()
 	}
 }
 
-//Client::clientControlPanel() _占用主線程 處理用戶輸入
-int Client::clientControlPanel(Client& c)
-{
-	Client_Instructions();
-	while (std::cin.getline(sendbuf, sizeof(sendbuf)))
-	{
-		memset(recvbuf, 0, sizeof(recvbuf));
-		iResult = send(ConnectSocket, sendbuf, (int)strlen(sendbuf), 0);
-		if (iResult == SOCKET_ERROR)
-		{
-			std::cout << "send failed with error: " << WSAGetLastError() << "\n";
-			closesocket(ConnectSocket);
-			WSACleanup();
-			return 1;
-		}
-
-		switch (hash_(sendbuf))
-		{
-		case"personal_information"_hash://請勿刪掉, 當輸入personal_information, 理應client不做事
-
-			break;
-		case "client_close"_hash:
-			Client_Close();
-
-			break;
-		case "send"_hash:
-			std::cout << "請輸入要傳輸的內容 : ";
-			std::cin >> sendbuf;
-			iResult = send(ConnectSocket, sendbuf, (int)strlen(sendbuf), 0);
-			if (iResult == SOCKET_ERROR)
-			{
-				std::cout << "send failed with error: " << WSAGetLastError() << "\n";
-				closesocket(ConnectSocket);
-				WSACleanup();
-				return 1;
-			}
-			break;
-		default:
-			std::cout << " 輸入錯誤或無此指令\n";
-			std::cout << "\n請輸入 : ";
-			break;
-		}
-	}
-}
-
-//Client::serverRecv() _給子線程回調 接收伺服器回傳
-int Client::serverRecv(Client& c)
-{
-	while (true)
-	{
-		c.bytesRead = recv(c.ConnectSocket, c.recvbuf, sizeof(c.recvbuf), 0);
-		if (c.bytesRead == -1)
-		{
-			std::cout << "recv failed with error: " << WSAGetLastError() << "\n";
-			closesocket(c.ConnectSocket);
-			WSACleanup();
-			exit(0);
-		}
-		c.recvbuf[c.bytesRead] = '\0';
-		switch (hash_(c.recvbuf))
-		{
-		case "kick"_hash:
-			Client_Close();
-
-			break;
-		case "123"_hash:
-			break;
-		default:
-			std::cout << "\n[系統][Server傳輸] \n" << c.recvbuf;
-
-		}
-		std::cout << "\n請輸入:";
-
-	}
-}
-
-//Client:: Client_Instructions() _提供客戶端說明文字
-void Client::Client_Instructions()
-{
-	std::cout << "[客戶端]\n";
-	std::cout << "------功能介紹------\n";
-	std::cout << "顯示個人資訊		輸入 : personal_information \n";
-	std::cout << "更改名稱		輸入 : set_name [名稱]\n";
-	std::cout << "關掉客戶端		輸入 : client_close \n";
-	std::cout << "--------------------\n";
-	std::cout << "請輸入 : ";
-
-}
-
 //Client::Client_Close() _關閉client
 int Client::Client_Close()
 {
@@ -153,5 +169,21 @@ int Client::Client_Close()
 	closesocket(ConnectSocket);
 	WSACleanup();
 
+	return 0;
+}
+
+//Client::Client_Send_To_Server() _傳輸給Server
+int Client::Client_Send_To_Server()
+{
+	std::cin.getline(sendbuf, sizeof(sendbuf));
+	iResult = send(ConnectSocket, sendbuf, (int)strlen(sendbuf), 0);
+	if (iResult == SOCKET_ERROR)
+	{
+		std::cout << "send failed with error: " << WSAGetLastError() << "\n";
+		closesocket(ConnectSocket);
+		WSACleanup();
+		return 1;
+	}
+	std::cout << "\n請輸入 : ";
 	return 0;
 }

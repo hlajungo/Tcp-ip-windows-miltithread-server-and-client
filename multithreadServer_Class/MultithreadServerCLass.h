@@ -21,10 +21,10 @@ constexpr static hash_t basis = 0xCBF29CE484222325ull;
 class Server
 {
 public:
-	//Server::Server()
+
+	//Server::Server() _構造函數
 	Server(const char* ip, const char* port);
 	
-
 	//Server::ServerInit() _初始化
 	int ServerInit();
 
@@ -47,19 +47,30 @@ public:
 	void PrintClientInfo(Server& s, int i);
 
 	//Server::search_client_by_number() _用編號查詢客戶端
-	int search_client_by_number(Server& s);
+	int search_client_by_Client_Number(Server& s);
 
 	//Server::traversal_client() _遍歷客戶端
 	int traversal_client(Server& s);
 		
 	//Server::kick() _踢除客戶端
-	int kick(Server& s);
+	int kick_by_Client_Number(Server& s);
+
+	//Server::send_to_client() _傳訊息給指定客戶端
+	int send_to_client_by__Client_Number(Server& s);
+
+	int send_to_all_client(Server& s);
 
 	//Server::client_personal_information() _處理客戶端信息要求
 	int client_personal_information(Server& s, int i);
 
 	//Server::client_client_close() _處理客戶端關閉要求
 	int client_client_close(Server& s, int i);
+
+	int client_send_to_server(Server &s, char* Recv_Buffer, int i,int bytesRead);
+
+	//---------------
+	bool isClientNumberAccessible(Server &s);
+	
 
 public:
 	const char* Server_IP;
@@ -72,10 +83,11 @@ public:
 	char* clientIP[20];								//用戶IP
 	int clientPort[20];								//用戶port 
 	std::string Send_Buffer[20];
-	int bytesSend;
+	
 
 private:
 	int iResult;
+	int bytesSend;
 	struct addrinfo* result = NULL;
 	struct addrinfo hints;
 	WSADATA wsaData;
