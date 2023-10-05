@@ -38,19 +38,29 @@ public:
 	//Client::Client_Close() __關閉client
 	int Client_Close();
 
-	//Client::Client_Send_To_Server() _傳輸給Server
+	//Client::Client_Send_To_Server() _傳輸訊息給Server
 	int Client_Send_To_Server();
 
+	//Client::set_name() _設置名稱
+	int set_name();
+
+	//Client::send_to_client() _傳送訊息給其他客戶端
+	int send_to_client();
+
+	//----------
+
+	//Client::ServerRecv_send_to_client _處理伺服器傳送他人傳送過來的訊息
+	int ServerRecv_send_to_client();
+
 public:
-	int iResult;
-	int bytesRead;
 	SOCKET ConnectSocket = INVALID_SOCKET;
-	char recvbuf[1024];
 	
 private:
+	int input_int;
+	int int_result;
+	char buffer[1024];
 	WSADATA wsaData;
 	struct addrinfo* result = NULL, * ptr = NULL, hints;
-	char sendbuf[1024];
 	const char* Server_IP;
 	const char* Server_Port;
 };

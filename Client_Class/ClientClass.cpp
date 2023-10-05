@@ -8,12 +8,13 @@
 //Client::clientControlPanel() _占用主線程 處理用戶輸入
 int Client::clientControlPanel(Client& c)
 {
+	
 	Client_Instructions();
-	while (std::cin >> sendbuf)
+	while (std::cin >> buffer)
 	{
-		memset(recvbuf, 0, sizeof(recvbuf));
-		iResult = send(ConnectSocket, sendbuf, (int)strlen(sendbuf), 0);
-		if (iResult == SOCKET_ERROR)
+
+		int_result = send(ConnectSocket, buffer, (int)strlen(buffer), 0);
+		if (int_result == SOCKET_ERROR)
 		{
 			std::cout << "send failed with error: " << WSAGetLastError() << "\n";
 			closesocket(ConnectSocket);
@@ -21,7 +22,7 @@ int Client::clientControlPanel(Client& c)
 			return 1;
 		}
 
-		switch (hash_(sendbuf))
+		switch (hash_(buffer))
 		{
 		case"personal_information"_hash://請勿刪掉, 當輸入personal_information, 理應client不做事
 
@@ -30,24 +31,16 @@ int Client::clientControlPanel(Client& c)
 			Client_Close();
 
 			break;
-		case "send"_hash:
+		case "send_to_server"_hash:
 			Client_Send_To_Server();
 
 			break;
 		case "set_name"_hash:
-			std::cin.getline(sendbuf,sizeof(sendbuf));
-			iResult = send(ConnectSocket, sendbuf, (int)strlen(sendbuf), 0);
-			if (iResult == SOCKET_ERROR)
-			{
-				std::cout << "send failed with error: " << WSAGetLastError() << "\n";
-				closesocket(ConnectSocket);
-				WSACleanup();
-				return 1;
-			}
-			std::cout << "請輸入 : ";
+			set_name();
+
 			break;
 		case "send_to_client"_hash:
-
+			send_to_client();
 
 			break;
 
@@ -64,25 +57,28 @@ int Client::serverRecv(Client& c)
 {
 	while (true)
 	{
-		c.bytesRead = recv(c.ConnectSocket, c.recvbuf, sizeof(c.recvbuf), 0);
-		if (c.bytesRead == -1)
+		memset(buffer, 0, sizeof(buffer));
+		int_result = recv(c.ConnectSocket, buffer, sizeof(buffer), 0);
+		if (int_result == -1)
 		{
 			std::cout << "recv failed with error: " << WSAGetLastError() << "\n";
 			closesocket(c.ConnectSocket);
 			WSACleanup();
 			exit(0);
 		}
-		c.recvbuf[c.bytesRead] = '\0';
-		switch (hash_(c.recvbuf))
+		buffer[int_result] = '\0';
+		switch (hash_(c.buffer))
 		{
 		case "kick"_hash:
 			Client_Close();
 
 			break;
-		case "123"_hash:
+		case "send_to_client"_hash:
+			ServerRecv_send_to_client();
+
 			break;
 		default:
-			std::cout << "\n[系統][Server]說 :\n" << c.recvbuf << "\n";
+			std::cout << "\n[系統][Server]說 :\n" << buffer << "\n";
 
 		}
 		std::cout << "\n請輸入:";
@@ -97,7 +93,8 @@ void Client::Client_Instructions()
 	std::cout << "------功能介紹------\n";
 	std::cout << "顯示個人資訊		輸入 : personal_information \n";
 	std::cout << "更改名稱		輸入 : set_name [名稱]\n";
-	std::cout << "對Server說話		輸入 : send [句子]\n";
+	std::cout << "對Server說話		輸入 : send_to_server [句子]\n";
+	std::cout << "對其他Client說話	輸入 : send_to_client {編號1~20] [句子]\n";
 	std::cout << "關掉客戶端		輸入 : client_close \n";
 	std::cout << "--------------------\n";
 	std::cout << "請輸入 : ";
@@ -117,18 +114,18 @@ Client::Client(const char* ip, const char* port)
 //Client::ClientInit() _初始化
 int Client::ClientInit()
 {
-	iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
-	if (iResult != 0) {
-		std::cout << "WSAStartup failed with error: " << iResult << "\n";
+	int_result = WSAStartup(MAKEWORD(2, 2), &wsaData);
+	if (int_result != 0) {
+		std::cout << "WSAStartup failed with error: " << int_result << "\n";
 		return 1;
 	}
 	ZeroMemory(&hints, sizeof(hints));
 	hints.ai_family = AF_UNSPEC;
 	hints.ai_socktype = SOCK_STREAM;
 	hints.ai_protocol = IPPROTO_TCP;
-	iResult = getaddrinfo(Server_IP, Server_Port, &hints, &result);
-	if (iResult != 0) {
-		std::cout << "getaddrinfo failed with error: " << iResult << "\n";
+	int_result = getaddrinfo(Server_IP, Server_Port, &hints, &result);
+	if (int_result != 0) {
+		std::cout << "getaddrinfo failed with error: " << int_result << "\n";
 		WSACleanup();
 		return 1;
 	}
@@ -140,8 +137,8 @@ int Client::ClientInit()
 			WSACleanup();
 			return 1;
 		}
-		iResult = connect(ConnectSocket, ptr->ai_addr, (int)ptr->ai_addrlen);
-		if (iResult == SOCKET_ERROR) {
+		int_result = connect(ConnectSocket, ptr->ai_addr, (int)ptr->ai_addrlen);
+		if (int_result == SOCKET_ERROR) {
 			closesocket(ConnectSocket);
 			ConnectSocket = INVALID_SOCKET;
 			continue;
@@ -159,8 +156,8 @@ int Client::ClientInit()
 //Client::Client_Close() _關閉client
 int Client::Client_Close()
 {
-	iResult = shutdown(ConnectSocket, SD_BOTH);
-	if (iResult == SOCKET_ERROR) {
+	int_result = shutdown(ConnectSocket, SD_BOTH);
+	if (int_result == SOCKET_ERROR) {
 		std::cout << "shutdown failed with error: " << WSAGetLastError() << "\n";
 		closesocket(ConnectSocket);
 		WSACleanup();
@@ -172,12 +169,13 @@ int Client::Client_Close()
 	return 0;
 }
 
-//Client::Client_Send_To_Server() _傳輸給Server
+//Client::Client_Send_To_Server() _傳輸訊息給Server
 int Client::Client_Send_To_Server()
 {
-	std::cin.getline(sendbuf, sizeof(sendbuf));
-	iResult = send(ConnectSocket, sendbuf, (int)strlen(sendbuf), 0);
-	if (iResult == SOCKET_ERROR)
+	memset(buffer, 0, sizeof(buffer));
+	std::cin.getline(buffer, sizeof(buffer));
+	int_result = send(ConnectSocket, buffer, (int)strlen(buffer), 0);
+	if (int_result == SOCKET_ERROR)
 	{
 		std::cout << "send failed with error: " << WSAGetLastError() << "\n";
 		closesocket(ConnectSocket);
@@ -187,3 +185,64 @@ int Client::Client_Send_To_Server()
 	std::cout << "\n請輸入 : ";
 	return 0;
 }
+
+//Client::set_name() _設置名稱
+int Client::set_name()
+{
+	memset(buffer, 0, sizeof(buffer));
+	std::cin.getline(buffer, sizeof(buffer));
+	int_result = send(ConnectSocket, buffer, (int)strlen(buffer), 0);
+	if (int_result == SOCKET_ERROR)
+	{
+		std::cout << "send failed with error: " << WSAGetLastError() << "\n";
+		closesocket(ConnectSocket);
+		WSACleanup();
+		return 1;
+	}
+	std::cout << "請輸入 : ";
+
+	return 0;
+}
+
+int Client::send_to_client()
+{
+	memset(buffer, 0, sizeof(buffer));
+	std::cin >> buffer;
+	int_result = send(ConnectSocket, buffer, (int)strlen(buffer), 0);
+	if (int_result == SOCKET_ERROR)
+	{
+		std::cout << "send failed with error: " << WSAGetLastError() << "\n";
+		closesocket(ConnectSocket);
+		WSACleanup();
+		return 1;
+	}
+	std::cin.getline(buffer, sizeof(buffer));
+	int_result = send(ConnectSocket, buffer, (int)strlen(buffer), 0);
+	if (int_result == SOCKET_ERROR)
+	{
+		std::cout << "send failed with error: " << WSAGetLastError() << "\n";
+		closesocket(ConnectSocket);
+		WSACleanup();
+		return 1;
+	}
+	std::cout << "請輸入 : ";
+
+	return 0;
+}
+
+
+//------------
+
+//Client::ServerRecv_send_to_client _處理伺服器傳送他人傳送過來的訊息
+int Client::ServerRecv_send_to_client()
+{
+	memset(buffer, 0, sizeof(buffer));
+	int_result = recv(ConnectSocket, buffer, sizeof(buffer), 0);
+	std::cout << "\n系統][第" << buffer << "號]對你說 :";
+	memset(buffer, 0, sizeof(buffer));
+	int_result = recv(ConnectSocket, buffer, sizeof(buffer), 0);
+	std::cout << buffer << "\n\n";
+
+	return 0;
+}
+

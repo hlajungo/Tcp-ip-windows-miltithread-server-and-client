@@ -58,19 +58,25 @@ public:
 	//Server::send_to_client() _傳訊息給指定客戶端
 	int send_to_client_by__Client_Number(Server& s);
 
+	//Server::send_to_all_client() _傳訊息給所有客戶端
 	int send_to_all_client(Server& s);
 
-	//Server::client_personal_information() _處理客戶端信息要求
+
+	//-------------客戶端處理
+	
+	//Server::client_personal_information() _處理客戶端要求信息要求
 	int client_personal_information(Server& s, int i);
 
 	//Server::client_client_close() _處理客戶端關閉要求
 	int client_client_close(Server& s, int i);
 
-	int client_send_to_server(Server &s, char* Recv_Buffer, int i,int bytesRead);
+	//Server::client_send_to_server _處理客戶端傳送給伺服器要求
+	int client_send_to_server(Server &s, int i);
 
-	//---------------
-	bool isClientNumberAccessible(Server &s);
+	//---------------一些工具
+	bool isClientNumberAccessible(Server &s, int i);
 	
+	void code_information(const char* a, const char* b, int c);
 
 public:
 	const char* Server_IP;
@@ -82,18 +88,19 @@ public:
 	int clientNumber[20];							//用戶編號 默認-1
 	char* clientIP[20];								//用戶IP
 	int clientPort[20];								//用戶port 
-	std::string Send_Buffer[20];
-	
+	char char_clientBuffer[20][1024];				//用戶char_buffer
+	int int_clientBuffer[20];						//用戶int_buffer
 
 private:
-	int iResult;
-	int bytesSend;
+	int int_result;									//結果判斷
+	int int_server_input;							//伺服器輸入
+	char command_char[1024];						//伺服器輸入
+	std::string message;							//指令buffer
 	struct addrinfo* result = NULL;
 	struct addrinfo hints;
 	WSADATA wsaData;
 	int optval = 1;
-	char command_char[1024];
-	int command_int;
+	
 };
 
 

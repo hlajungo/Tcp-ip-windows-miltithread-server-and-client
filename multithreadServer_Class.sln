@@ -7,6 +7,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "multithreadServer_Class", "
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Client_Class", "Client_Class\Client_Class.vcxproj", "{492F1713-5A99-4FED-AD87-CEBC5BB7685E}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "非內容的代碼測試區", "非內容的代碼測試區\非內容的代碼測試區.vcxproj", "{3EBAB828-6674-4A9B-88A6-27265AE9BF7A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -31,6 +33,14 @@ Global
 		{492F1713-5A99-4FED-AD87-CEBC5BB7685E}.Release|x64.Build.0 = Release|x64
 		{492F1713-5A99-4FED-AD87-CEBC5BB7685E}.Release|x86.ActiveCfg = Release|Win32
 		{492F1713-5A99-4FED-AD87-CEBC5BB7685E}.Release|x86.Build.0 = Release|Win32
+		{3EBAB828-6674-4A9B-88A6-27265AE9BF7A}.Debug|x64.ActiveCfg = Debug|x64
+		{3EBAB828-6674-4A9B-88A6-27265AE9BF7A}.Debug|x64.Build.0 = Debug|x64
+		{3EBAB828-6674-4A9B-88A6-27265AE9BF7A}.Debug|x86.ActiveCfg = Debug|Win32
+		{3EBAB828-6674-4A9B-88A6-27265AE9BF7A}.Debug|x86.Build.0 = Debug|Win32
+		{3EBAB828-6674-4A9B-88A6-27265AE9BF7A}.Release|x64.ActiveCfg = Release|x64
+		{3EBAB828-6674-4A9B-88A6-27265AE9BF7A}.Release|x64.Build.0 = Release|x64
+		{3EBAB828-6674-4A9B-88A6-27265AE9BF7A}.Release|x86.ActiveCfg = Release|Win32
+		{3EBAB828-6674-4A9B-88A6-27265AE9BF7A}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
