@@ -64,14 +64,20 @@ public:
 
 	//-------------客戶端處理
 	
-	//Server::client_personal_information() _處理客戶端要求信息要求
+	//Server::client_personal_information() _處理客戶端要求信息
 	int client_personal_information(Server& s, int i);
 
-	//Server::client_client_close() _處理客戶端關閉要求
+	//Server::client_client_close() _處理客戶端關閉
 	int client_client_close(Server& s, int i);
 
-	//Server::client_send_to_server _處理客戶端傳送給伺服器要求
+	//Server::client_send_to_server _處理客戶端傳送給伺服器
 	int client_send_to_server(Server &s, int i);
+
+	//Server::client_send_to_client _處理客戶端傳送至客戶端訊息
+	int client_send_to_client(Server &s, int i);
+
+	//Server::client_set_name() _處理客戶端改名
+	int client_set_name(Server& s, int i);
 
 	//---------------一些工具
 	bool isClientNumberAccessible(Server &s, int i);

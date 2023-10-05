@@ -54,7 +54,6 @@ int Server::clientRevc(Server& s)
 {
 	//char clientRecvBuffer[1024];
 	int i = s.CurrentClientNumber;
-	int l;
 	while (true) {
 		memset(char_clientBuffer[i], 0, sizeof(char_clientBuffer[i]));
 		int_result = recv(s.clientSocket[i], char_clientBuffer[i], sizeof(char_clientBuffer[i]), 0);
@@ -82,77 +81,11 @@ int Server::clientRevc(Server& s)
 
 			break;
 		case "send_to_client"_hash:
-
-			memset(char_clientBuffer[i], 0, sizeof(char_clientBuffer[i]));
-			int_result = recv(s.clientSocket[i], char_clientBuffer[i], sizeof(char_clientBuffer[i]), 0);
-			l = atoi(char_clientBuffer[i]);
-			if (int_result == -1)
-			{
-				std::cout << "recv failed with error: " << WSAGetLastError() << "\n";
-				code_information(__FILE__, __FUNCTION__, __LINE__);
-				closesocket(s.clientSocket[int_server_input]);
-				WSACleanup();
-				return 1;
-			}
-			if (isClientNumberAccessible(s, l) == false)return 1;
-			//傳輸指令
-			message = "send_to_client";
-			strcpy_s(char_clientBuffer[i], message.c_str());
-			int_result = send(clientSocket[l], char_clientBuffer[i], (int)strlen(char_clientBuffer[i]), 0);
-			if (int_result == -1)
-			{
-				std::cout << "send failed with error: " << WSAGetLastError() << "\n";
-				code_information(__FILE__, __FUNCTION__, __LINE__);
-				closesocket(s.clientSocket[int_server_input]);
-				WSACleanup();
-				return 1;
-			}
-			//傳輸要求傳輸者的編號
-			int_result = send(clientSocket[l], std::to_string(i).c_str() ,(int)strlen(std::to_string(i).c_str()), 0);
-			if (int_result == -1)
-			{
-				std::cout << "send failed with error: " << WSAGetLastError() << "\n";
-				code_information(__FILE__, __FUNCTION__, __LINE__);
-				closesocket(s.clientSocket[int_server_input]);
-				WSACleanup();
-				return 1;
-			}
-			//傳輸內容
-			memset(char_clientBuffer[i], 0, sizeof(char_clientBuffer[i]));
-			int_result = recv(s.clientSocket[i], char_clientBuffer[i], sizeof(char_clientBuffer[i]), 0);
-			if (int_result == -1)
-			{
-				std::cout << "recv failed with error: " << WSAGetLastError() << "\n";
-				code_information(__FILE__, __FUNCTION__, __LINE__);
-				closesocket(s.clientSocket[int_server_input]);
-				WSACleanup();
-				return 1;
-			}
-			int_result = send(clientSocket[l], char_clientBuffer[i], (int)strlen(char_clientBuffer[i]), 0);
-			if (int_result == -1)
-			{
-				std::cout << "send failed with error: " << WSAGetLastError() << "\n";
-				code_information(__FILE__, __FUNCTION__, __LINE__);
-				closesocket(s.clientSocket[int_server_input]);
-				WSACleanup();
-				return 1;
-			}
-			std::cout << "\n[系統][第" << i << "號][" << s.clientName[i] << "]對[第" << l << "號]說 :" << char_clientBuffer[i] << "\n\n";
+			client_send_to_client(s, i);
 
 			break;
 		case "set_name"_hash:
-			memset(char_clientBuffer[i], 0, sizeof(char_clientBuffer[i]));
-			int_result = recv(s.clientSocket[i], char_clientBuffer[i], sizeof(char_clientBuffer[i]), 0);
-			if (int_result == -1)
-			{
-				std::cout << "recv failed with error: " << WSAGetLastError() << "\n";
-				closesocket(s.clientSocket[int_server_input]);
-				WSACleanup();
-				return 1;
-			}
-			s.clientName[i] = char_clientBuffer[i];
-			std::cout << "\n[系統][第" << i << "號][" << s.clientName[i] << "]設置名稱為\"" << char_clientBuffer[i] << "\"\n\n";
-			std::cout << "請輸入 : ";
+			client_set_name(s, i);
 
 			break;
 		default:
@@ -405,7 +338,7 @@ int Server::send_to_all_client(Server& s)
 
 //-----------------
 
-//Server::client_personal_information() _處理客戶端信息要求
+//Server::client_personal_information() _處理客戶端信息
 int Server::client_personal_information(Server& s, int i)
 {
 	std::cout << "\n[系統][第" << i << "號][" << s.clientName[i] << "] : 請求個人資訊\n\n";
@@ -426,7 +359,7 @@ int Server::client_personal_information(Server& s, int i)
 	return 0;
 }
 
-//Server::client_client_close() _處理客戶端關閉要求
+//Server::client_client_close() _處理客戶端關閉
 int Server::client_client_close(Server& s, int i)
 {
 	std::cout << "\n[系統][第" << i << "號][" << s.clientName[i] << "] : 斷開連接\n\n";
@@ -437,7 +370,7 @@ int Server::client_client_close(Server& s, int i)
 	return 0;
 }
 
-
+//Server::client_send_to_server _處理客戶端傳送給伺服器
 int Server::client_send_to_server(Server &s, int i )
 {
 	memset(char_clientBuffer[i], 0, sizeof(char_clientBuffer[i]));
@@ -453,10 +386,90 @@ int Server::client_send_to_server(Server &s, int i )
 	return 0;
 }
 
+//Server::client_send_to_client _處理客戶端傳送至客戶端訊息
+int Server::client_send_to_client(Server &s,int i)
+{
+	int l;
+	memset(char_clientBuffer[i], 0, sizeof(char_clientBuffer[i]));
+	int_result = recv(s.clientSocket[i], char_clientBuffer[i], sizeof(char_clientBuffer[i]), 0);
+	l = atoi(char_clientBuffer[i]);
+	if (int_result == -1)
+	{
+		std::cout << "recv failed with error: " << WSAGetLastError() << "\n";
+		code_information(__FILE__, __FUNCTION__, __LINE__);
+		closesocket(s.clientSocket[int_server_input]);
+		WSACleanup();
+		return 1;
+	}
+	if (isClientNumberAccessible(s, l) == false)return 1;
+	//傳輸指令
+	message = "send_to_client";
+	strcpy_s(char_clientBuffer[i], message.c_str());
+	int_result = send(clientSocket[l], char_clientBuffer[i], (int)strlen(char_clientBuffer[i]), 0);
+	if (int_result == -1)
+	{
+		std::cout << "send failed with error: " << WSAGetLastError() << "\n";
+		code_information(__FILE__, __FUNCTION__, __LINE__);
+		closesocket(s.clientSocket[int_server_input]);
+		WSACleanup();
+		return 1;
+	}
+	//傳輸要求傳輸者的編號
+	int_result = send(clientSocket[l], std::to_string(i).c_str(), (int)strlen(std::to_string(i).c_str()), 0);
+	if (int_result == -1)
+	{
+		std::cout << "send failed with error: " << WSAGetLastError() << "\n";
+		code_information(__FILE__, __FUNCTION__, __LINE__);
+		closesocket(s.clientSocket[int_server_input]);
+		WSACleanup();
+		return 1;
+	}
+	//傳輸內容
+	memset(char_clientBuffer[i], 0, sizeof(char_clientBuffer[i]));
+	int_result = recv(s.clientSocket[i], char_clientBuffer[i], sizeof(char_clientBuffer[i]), 0);
+	if (int_result == -1)
+	{
+		std::cout << "recv failed with error: " << WSAGetLastError() << "\n";
+		code_information(__FILE__, __FUNCTION__, __LINE__);
+		closesocket(s.clientSocket[int_server_input]);
+		WSACleanup();
+		return 1;
+	}
+	int_result = send(clientSocket[l], char_clientBuffer[i], (int)strlen(char_clientBuffer[i]), 0);
+	if (int_result == -1)
+	{
+		std::cout << "send failed with error: " << WSAGetLastError() << "\n";
+		code_information(__FILE__, __FUNCTION__, __LINE__);
+		closesocket(s.clientSocket[int_server_input]);
+		WSACleanup();
+		return 1;
+	}
+	std::cout << "\n[系統][第" << i << "號][" << s.clientName[i] << "]對[第" << l << "號]說 :" << char_clientBuffer[i] << "\n\n";
 
+	return 0;
+}
 
+//Server::client_set_name() _處理客戶端改名
+int Server::client_set_name(Server &s, int i)
+{
+	memset(char_clientBuffer[i], 0, sizeof(char_clientBuffer[i]));
+	int_result = recv(s.clientSocket[i], char_clientBuffer[i], sizeof(char_clientBuffer[i]), 0);
+	if (int_result == -1)
+	{
+		std::cout << "recv failed with error: " << WSAGetLastError() << "\n";
+		closesocket(s.clientSocket[int_server_input]);
+		WSACleanup();
+		return 1;
+	}
+	s.clientName[i] = char_clientBuffer[i];
+	std::cout << "\n[系統][第" << i << "號][" << s.clientName[i] << "]設置名稱為\"" << char_clientBuffer[i] << "\"\n\n";
+	std::cout << "請輸入 : ";
+
+	return 0;
+}
 
 //----------------
+
 bool Server::isClientNumberAccessible(Server &s, int i)
 {
 	if (clientNumber[i] == -1 || i < 0)
