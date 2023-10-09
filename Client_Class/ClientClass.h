@@ -79,7 +79,7 @@ inline hash_t hash_(char const* str)
 	return ret;
 }
 
-//global _處理switch的輸入問題
+//global hash_compile_time _處理switch的輸入問題
 constexpr hash_t hash_compile_time(char const* str, hash_t last_value = basis)
 {
 	return *str ? hash_compile_time(str + 1, (*str ^ last_value) * prime) : last_value;

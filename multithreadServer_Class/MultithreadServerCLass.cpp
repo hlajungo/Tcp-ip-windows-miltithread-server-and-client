@@ -470,6 +470,7 @@ int Server::client_set_name(Server &s, int i)
 
 //----------------
 
+//Server::isClientNumberAccessible() _判斷該數字是否為已使用的客戶端
 bool Server::isClientNumberAccessible(Server &s, int i)
 {
 	if (clientNumber[i] == -1 || i < 0)
@@ -481,6 +482,7 @@ bool Server::isClientNumberAccessible(Server &s, int i)
 	return true;
 }
 
+//Server::code_information() _輸入調用處的文件名, 函數和行數
 void Server::code_information(const char* a, const char* b, int c)
 {
 	std::cout <<"第" << c << "行出錯" << "\n";
